@@ -19,4 +19,6 @@ class UNDONE_API Combatant {
 public:
 	Combatant();
 	~Combatant();
+
+	void on_receive_damage();
 };

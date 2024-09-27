@@ -1,6 +1,5 @@
 // amory acosta - copyright 2024
 
-
 #include "Combatant.h"
 
 Stat::Stat(uint32_t _current, uint32_t _max) {
