@@ -24,6 +24,23 @@ Stat & Stat::operator -= (int rhs) {
 	return *this;
 }
 
+Stat & Stat::operator + (int rhs) {
+	current += rhs;
+	std::clamp((int)current, 0, (int)max);
+
+	return *this;
+}
+
+Stat & Stat::operator - (int rhs) {
+	rhs = std::clamp(rhs, 0, (int)current);
+
+	current -= rhs;
+
+	std::clamp((int)current, 0, (int)max);
+
+	return *this;
+}
+
 Combatant::Combatant() {
 
 }

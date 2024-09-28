@@ -40,6 +40,7 @@ void Publisher::subscribe(Observer & observer) {
 	observers.push_back(observer);
 }
 
+// TODO - test if pointer comparison is accurate
 void Publisher::unsubscribe(Observer & observer) {
 	for (auto current = observers.begin(); current != observers.end(); current++) {
 		if(&(*current) == &observer) {

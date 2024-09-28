@@ -11,6 +11,9 @@ public:
 	uint32_t current = 0;
 	uint32_t max = 0;
 
+	Stat & operator + (int rhs);
+	Stat & operator - (int rhs);
+
 	Stat & operator += (int rhs);
 	Stat & operator -= (int rhs);
 };
@@ -21,4 +24,5 @@ public:
 	~Combatant();
 
 	void on_receive_damage();
+	void on_take_turn();
 };
