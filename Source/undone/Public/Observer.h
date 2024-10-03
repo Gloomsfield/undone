@@ -2,42 +2,105 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
-#include <string>
+#include <unordered_map>
+#include <functional>
+#include <utility>
 #include <vector>
+#include <string>
 
-enum EventType {
-	DUMMY_EVENT,
+class Event {
+public:
+	const virtual std::string const name() = 0;
 };
 
-class UNDONE_API Event {
+class Subscriber { };
+
+class Publisher {
+	std::unordered_map<Subscriber *, std::vector<const std::string>> subscriber_event_map;
+	std::unordered_map<const std::string, std::vector<std::pair<Subscriber *, std::function<void(Event *)>>>> subscriber_callbacks;
+
 public:
-	Event();
-	~Event();
+	void notify_subscribers(Event * e) {
+		std::vector<std::pair<Subscriber *, std::function<void(Event *)>>> subscriber_callback_pairs;
 
-	const virtual EventType type() const { return EventType::DUMMY_EVENT; }
-	const virtual std::string name() const { return "Dummy"; }
-	const virtual std::string description() const { return "A dummy event"; }
-};
+		auto found_value = subscriber_callbacks.find(e->name());
 
-class UNDONE_API Observer {
-public:
-	Observer();
-	~Observer();
+		if (found_value == subscriber_callbacks.end()) {
+			return;
+		}
 
-	virtual void on_notification(const Event & e);
-};
+		subscriber_callback_pairs = subscriber_callbacks[e->name()];
 
-class UNDONE_API Publisher {
-public:
-	Publisher();
-	~Publisher();
+		for (std::pair<Subscriber *, std::function<void(Event *)>> subscriber_callback_pair : subscriber_callback_pairs) {
+			subscriber_callback_pair.second(e);
+		}
+	}
 
-	std::vector<Observer> observers;
+	bool register_subscriber(Subscriber * subscriber, Event * e, std::function<void(Event *)> f) {
+		auto found_subscriber_value = subscriber_event_map.find(subscriber);
 
-	void notify_observers(const Event & e);
+		if (found_subscriber_value != subscriber_event_map.end()) {
+			std::vector<const std::string> & event_names = subscriber_event_map[subscriber];
 
-	void subscribe(Observer & observer);
-	void unsubscribe(Observer & observer);
+			for (std::string event_name : event_names) {
+				if (event_name == e->name()) {
+					return false;
+				}
+			}
+
+			event_names.push_back(e->name());
+
+			insert_subscriber_callback(subscriber, e, f);
+
+			return true;
+		}
+
+		subscriber_event_map[subscriber] = { e->name() };
+
+		insert_subscriber_callback(subscriber, e, f);
+
+		return true;
+	}
+
+	bool unregister_subscriber(Subscriber * subscriber) {
+		auto found_subscriber_value = subscriber_event_map.find(subscriber);
+
+		if (found_subscriber_value == subscriber_event_map.end()) {
+			return false;
+		}
+
+		for (std::string event_name : subscriber_event_map[subscriber]) {
+			auto found_pair_values = subscriber_callbacks.find(event_name);
+
+			if (found_pair_values == subscriber_callbacks.end()) {
+				continue;
+			}
+
+			std::vector<std::pair<Subscriber *, std::function<void(Event *)>>> & found_pairs = subscriber_callbacks[event_name];
+
+			for (auto pair_iterator = found_pairs.begin(); pair_iterator != found_pairs.end(); pair_iterator++) {
+				if (pair_iterator->first == subscriber) {
+					found_pairs.erase(pair_iterator);
+					break;
+				}
+			}
+		}
+
+		subscriber_event_map.erase(found_subscriber_value);
+
+		return true;
+	}
+
+private:
+	void insert_subscriber_callback(Subscriber * subscriber, Event * e, std::function<void(Event *)> f) {
+		auto found_callback_value = subscriber_callbacks.find(e->name());
+
+		if (found_callback_value == subscriber_callbacks.end()) {
+			subscriber_callbacks[e->name()] = { std::pair<Subscriber *, std::function<void(Event *)>>(subscriber, f) };
+
+			return;
+		}
+
+		subscriber_callbacks[e->name()].push_back(std::pair<Subscriber *, std::function<void(Event *)>>(subscriber, f));
+	}
 };

@@ -4,25 +4,47 @@
 
 #include "CoreMinimal.h"
 
-class UNDONE_API Stat {
-public:
-	Stat(uint32_t _current, uint32_t _max);
+#include <cstdint>
 
-	uint32_t current = 0;
-	uint32_t max = 0;
+// Stats
 
-	Stat & operator + (int rhs);
-	Stat & operator - (int rhs);
+class Stat {
 
-	Stat & operator += (int rhs);
-	Stat & operator -= (int rhs);
 };
+
+class HealthStat : public Stat {
+
+};
+
+class SpeedStat : public Stat {
+
+};
+
+// Statuses
+
+class Status { };
+
+class TimedStatus : public Status {
+public:
+	virtual std::uint32_t rounds() = 0;
+	std::uint32_t cure_timer = 0;
+
+	void update_countdown() {
+		cure_timer++;
+		
+		if (cure_timer == rounds()) {
+
+		}
+	}
+};
+
+// Combatants
 
 class UNDONE_API Combatant {
 public:
 	Combatant();
 	~Combatant();
 
-	void on_receive_damage();
-	void on_take_turn();
+	HealthStat health;
+	SpeedStat speed;
 };
